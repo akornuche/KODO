@@ -1,0 +1,1358 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  username        String     @unique
+  password        String
+  firstName       String?
+  lastName        String?
+  role            Role       @default(buyer)
+  stripeAccountId String?    // Stripe connected account ID (for sellers)
+  // Bank account information for payouts (Flutterwave)
+  bankName        String?    // Bank name
+  accountNumber   String?    // Bank account number
+  accountName     String?    // Account holder name
+  bankCode        String?    // Bank code for Flutterwave
+  // Seller-specific fields
+  businessName    String?    // Business/shop name for sellers
+  sellerNiche     String?    // Primary niche/specialization (e.g., "Electronics", "Fashion")
+  sellerCategories String?   // JSON array of allowed product categories
+  businessDescription String? // Seller bio/about
+  businessLogo    String?    // Business logo URL
+  taxId           String?    // Tax identification number for sellers
+  verified        Boolean    @default(false) // Email/phone verification status
+  sellerOnboarded Boolean    @default(false) // Has completed seller onboarding
+  onboardingStep  Int        @default(0) // Current onboarding step (0-4)
+  // Buyer-specific fields
+  buyerOnboarded  Boolean    @default(false) // Has completed buyer onboarding
+  buyerOnboardingStep Int    @default(0) // Current buyer onboarding step (0-3)
+  shoppingInterests String?  // JSON array of interested categories
+  // Courier-specific fields
+  courierOnboarded Boolean   @default(false) // Has completed courier onboarding
+  courierOnboardingStep Int  @default(0) // Current courier onboarding step (0-4)
+  courierVerificationStatus String @default("unverified") // unverified, basic, standard, premium
+  vehicleType     String?    // motorcycle, car, van, bicycle, on_foot
+  vehicleRegistration String?
+  vehicleColor    String?
+  vehicleMake     String?
+  vehicleModel    String?
+  vehicleCapacity Float?     // Weight capacity in kg
+  governmentIdType String?   // NIN, drivers_license, voters_card, passport
+  governmentIdNumber String?
+  courierRating   Float?     @default(5.0)
+  completedDeliveries Int    @default(0)
+  acceptanceRate  Float?     @default(100.0)
+  profilePhotoUrl String?
+  profilePhotoPublicId String?
+  lastKnownLat    Float?
+  lastKnownLng    Float?
+  avatarUrl       String?    // Profile picture URL
+  avatarPublicId  String?    // Cloudinary public ID for avatar
+  deviceTokens    Json?      // Array of device tokens for push notifications
+  pushSubscriptions Json?    // Array of web push subscriptions
+  notificationPreferences Json? // User notification preferences
+  phoneNumber     String?    // Phone number for SMS notifications
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  // Relations
+  products        Product[]       @relation("SellerProducts")
+  bids            Bid[]           @relation("BidMaker")
+  orders          Order[]         @relation("OrderBuyer")
+  deliveries      Delivery[]      @relation("CourierDeliveries")
+  reviews         Review[]        @relation("ReviewAuthor")
+  sentMessages    Message[]       @relation("MessageSender")
+  receivedMessages Message[]      @relation("MessageReceiver")
+  conversations1  Conversation[]  @relation("ConversationUser1")
+  conversations2  Conversation[]  @relation("ConversationUser2")
+  refunds         Refund[]        @relation("RefundRequester")
+  processedRefunds Refund[]       @relation("RefundProcessor")
+  notifications   Notification[]  @relation("UserNotifications")
+  createdDisputes Dispute[]       @relation("DisputeCreator")
+  resolvedDisputes Dispute[]      @relation("DisputeResolver")
+  addresses       Address[]       @relation("UserAddresses")
+  serviceAreas    CourierServiceArea[] @relation("CourierServiceAreas")
+  routes          CourierRoute[]  @relation("CourierRoutes")
+  documents       CourierDocument[] @relation("CourierDocuments")
+  availability    CourierAvailability[] @relation("CourierAvailability")
+  preferences     CourierPreferences? @relation("CourierPreferences")
+  guarantor       CourierGuarantor? @relation("CourierGuarantor")
+  paymentMethods  PaymentMethod[] @relation("UserPaymentMethods")
+  assignmentLogs  CourierAssignmentLog[] @relation("CourierAssignments")
+  wallet          Wallet?         @relation("UserWallet")
+  transactions    Transaction[]   @relation("UserTransactions")
+  wishlists       Wishlist[]      @relation("UserWishlists")
+  productViews    ProductView[]   @relation("UserProductViews")
+  productQAs      ProductQA[]     @relation("UserProductQAs")
+  sellerBadges    SellerBadge[]   @relation("SellerBadges")
+  supportTickets  SupportTicket[] @relation("UserTickets")
+  assignedTickets SupportTicket[] @relation("AgentTickets")
+  followedSellers SellerFollow[]  @relation("BuyerFollows")
+  followers       SellerFollow[]  @relation("SellerFollowers")
+  cartAbandonments CartAbandonment[] @relation("UserCartAbandonments")
+  returnRequests  ReturnRequest[] @relation("UserReturnRequests")
+  
+  // Indexes
+  @@index([role])
+  @@index([createdAt])
+  @@index([lastKnownLat, lastKnownLng])
+  @@index([sellerNiche])
+  @@index([verified])
+  @@index([sellerOnboarded])
+  @@index([buyerOnboarded])
+  @@index([courierOnboarded])
+  @@index([courierVerificationStatus])
+  @@index([courierRating])
+  @@index([vehicleType])
+  @@index([role, sellerNiche])
+  @@index([role, verified])
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  price         Float
+  category      String?
+  tags          String?   // Comma-separated tags for SQLite compatibility
+  condition     ProductCondition @default(new)
+  location      String?   // City, state, or region
+  averageRating Float?    @default(0)
+  reviewCount   Int       @default(0)
+  sellerId      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  seller      User      @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
+  bids        Bid[]
+  orders      Order[]
+  reviews     Review[]
+  images      ProductImage[]
+  variants    ProductVariant[]
+  wishlists   Wishlist[]      @relation("WishlistProducts")
+  views       ProductView[]   @relation("ProductViews")
+  recommendations ProductRecommendation[] @relation("RecommendedProducts")
+  questions   ProductQA[]     @relation("ProductQuestions")
+  sizeGuides  SizeGuide[]     @relation("ProductSizeGuides")
+  
+  // New inventory fields
+  status      ProductStatus   @default(active)
+  stockQuantity Int?
+  lowStockThreshold Int?
+  sku         String?
+  brand       String?
+  weight      Float?
+  dimensions  String?         // JSON: {length, width, height}
+  isDigital   Boolean         @default(false)
+  digitalFileUrl String?
+  digitalFileSize Int?        // File size in bytes
+  digitalFileName String?     // Original filename
+  downloadLimit Int?          // Max downloads per purchase (null = unlimited)
+  licenseType String?         // single, multi, enterprise
+  
+  // Indexes for performance
+  @@index([category])
+  @@index([price])
+  @@index([createdAt])
+  @@index([sellerId])
+  @@index([averageRating])
+  @@index([condition])
+  @@index([location])
+  @@index([category, price])
+  @@index([category, createdAt])
+  @@index([location, createdAt])
+  @@index([sellerId, createdAt])
+}
+
+model ProductImage {
+  id           String   @id @default(uuid())
+  productId    String
+  url          String
+  thumbnailUrl String?
+  publicId     String   @unique // Cloudinary public ID
+  alt          String?
+  caption      String?
+  width        Int?
+  height       Int?
+  size         Int?     // File size in bytes
+  format       String?
+  order        Int      @default(0) // Display order
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@index([productId])
+  @@index([order])
+}
+
+model Bid {
+  id         String    @id @default(uuid())
+  productId  String?
+  buyerId    String
+  amount     Float
+  message    String?
+  status     BidStatus @default(open)
+  // Request-specific fields
+  title      String?
+  category   String?
+  description String?
+  location   String?
+  condition  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  // Relations
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  buyer      User      @relation("BidMaker", fields: [buyerId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  buyerId      String
+  productId    String
+  quantity     Int         @default(1)
+  totalAmount  Float
+  deliveryAddress String?
+  notes        String?
+  status       OrderStatus @default(pending)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  // Relations
+  buyer        User        @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  escrow       Escrow?
+  delivery     Delivery?
+  review       Review?
+  refund       Refund?
+  dispute      Dispute?
+  invoice      Invoice?
+  returnRequest ReturnRequest?
+  
+  // Tax fields
+  subtotal     Float?
+  taxAmount    Float?
+  taxRate      Float?
+  taxRegion    String?
+  
+  // Indexes
+  @@index([buyerId])
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([buyerId, status])
+  @@index([buyerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model Delivery {
+  id          String         @id @default(uuid())
+  orderId     String         @unique
+  courierId   String?
+  status      DeliveryStatus @default(pending)
+  tracking    String?
+  pickupLat   Float?
+  pickupLng   Float?
+  dropoffLat  Float?
+  dropoffLng  Float?
+  currentLat  Float?         // Current courier location
+  currentLng  Float?         // Current courier location
+  locationUpdatedAt DateTime? // Last location update timestamp
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  // Relations
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courier        User?          @relation("CourierDeliveries", fields: [courierId], references: [id], onDelete: SetNull)
+  locations      DeliveryLocation[]
+  assignmentLogs CourierAssignmentLog[]
+}
+
+model Escrow {
+  id               String    @id @default(uuid())
+  orderId          String    @unique
+  amount           Float
+  paymentIntentId  String?   // Stripe payment intent ID
+  heldUntil        DateTime?
+  released         Boolean   @default(false)
+  releasedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  // Relations
+  order            Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Refund {
+  id           String       @id @default(uuid())
+  orderId      String       @unique
+  userId       String
+  amount       Float
+  reason       String
+  status       RefundStatus @default(pending)
+  refundId     String?      // Stripe refund ID
+  processedBy  String?      // Admin who processed the refund
+  processedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
+  // Relations
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user         User         @relation("RefundRequester", fields: [userId], references: [id], onDelete: Cascade)
+  processor    User?        @relation("RefundProcessor", fields: [processedBy], references: [id])
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  productId   String
+  userId      String
+  rating      Int      // 1-5 stars
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User     @relation("ReviewAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+}
+
+model Conversation {
+  id              String    @id @default(uuid())
+  user1Id         String
+  user2Id         String
+  lastMessageAt   DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  user1           User      @relation("ConversationUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2           User      @relation("ConversationUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  messages        Message[]
+  
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id              String       @id @default(uuid())
+  conversationId  String
+  senderId        String
+  receiverId      String
+  content         String
+  read            Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Relations
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id          String      @id @default(uuid())
+  userId      String
+  type        String      // Notification type (e.g., 'order_placed', 'bid_received')
+  title       String
+  body        String
+  data        Json?       // Additional notification data
+  priority    String      @default("normal") // 'low', 'normal', 'high'
+  read        Boolean     @default(false)
+  readAt      DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  user        User        @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([type])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model Dispute {
+  id          String       @id @default(uuid())
+  orderId     String       @unique
+  userId      String       // User who created the dispute
+  reason      String       // Reason for dispute (e.g., 'item_not_received', 'item_damaged')
+  description String?      // Detailed description of the dispute
+  evidence    Json?        // Array of evidence file URLs or descriptions
+  status      DisputeStatus @default(pending)
+  resolution  String?      // Admin's resolution notes
+  resolvedBy  String?      // Admin who resolved the dispute
+  resolvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user        User         @relation("DisputeCreator", fields: [userId], references: [id], onDelete: Cascade)
+  resolver    User?        @relation("DisputeResolver", fields: [resolvedBy], references: [id])
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Enums
+enum Role {
+  buyer
+  seller
+  courier
+  admin
+}
+
+enum BidStatus {
+  open
+  accepted
+  rejected
+  withdrawn
+}
+
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  completed
+  cancelled
+  disputed
+}
+
+enum DeliveryStatus {
+  pending
+  assigned
+  in_transit
+  delivered
+  failed
+}
+
+enum ProductCondition {
+  new
+  like_new
+  good
+  fair
+  poor
+}
+
+enum RefundStatus {
+  pending
+  approved
+  rejected
+  processed
+}
+
+enum DisputeStatus {
+  pending
+  under_review
+  resolved
+  closed
+}
+
+model DeliveryLocation {
+  id         String    @id @default(uuid())
+  deliveryId String
+  lat        Float
+  lng        Float
+  accuracy   Float?    // GPS accuracy in meters
+  speed      Float?    // Speed in m/s (if available)
+  heading    Float?    // Direction in degrees (if available)
+  source     String    @default("manual") // 'manual', 'gps', 'api'
+  createdAt  DateTime  @default(now())
+  
+  // Relations
+  delivery   Delivery  @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  
+  @@index([deliveryId])
+  @@index([createdAt])
+  @@index([deliveryId, createdAt])
+}
+
+model Address {
+  id          String    @id @default(uuid())
+  userId      String
+  addressType String    @default("home") // home, work, other
+  label       String?
+  fullName    String
+  phoneNumber String
+  street      String
+  apartment   String?
+  city        String
+  state       String
+  lga         String?   // Local Government Area
+  postalCode  String?
+  landmark    String?
+  additionalDirections String?
+  isDefault   Boolean   @default(false)
+  lat         Float?
+  lng         Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  user        User      @relation("UserAddresses", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@index([lat, lng])
+  @@index([city, state])
+}
+
+model CourierServiceArea {
+  id          String    @id @default(uuid())
+  courierId   String
+  name        String
+  state       String
+  lgas        String?   // JSON array of LGAs
+  polygon     String?   // GeoJSON polygon
+  centerLat   Float?
+  centerLng   Float?
+  maxRadius   Float     @default(10)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  courier     User      @relation("CourierServiceAreas", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@index([courierId])
+  @@index([courierId, isActive])
+  @@index([centerLat, centerLng])
+  @@index([state])
+}
+
+model CourierRoute {
+  id               String    @id @default(uuid())
+  courierId        String
+  name             String
+  startCity        String
+  startState       String
+  startLga         String?
+  startLandmark    String?
+  startLat         Float?
+  startLng         Float?
+  endCity          String
+  endState         String
+  endLga           String?
+  endLandmark      String?
+  endLat           Float?
+  endLng           Float?
+  stopPoints       String?   // JSON array
+  frequency        String    @default("daily")
+  operatingDays    String?   // JSON array
+  departureTime    String?
+  estimatedArrival String?
+  estimatedDuration Int?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  // Relations
+  courier          User      @relation("CourierRoutes", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@index([courierId])
+  @@index([courierId, isActive])
+  @@index([startCity, endCity])
+  @@index([startLat, startLng])
+  @@index([endLat, endLng])
+}
+
+model CourierDocument {
+  id              String    @id @default(uuid())
+  courierId       String
+  documentType    String
+  fileUrl         String
+  publicId        String?
+  fileName        String?
+  fileSize        Int?
+  mimeType        String?
+  status          String    @default("pending")
+  rejectionReason String?
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  expiryDate      DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  courier         User      @relation("CourierDocuments", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@index([courierId])
+  @@index([courierId, documentType])
+  @@index([status])
+}
+
+model CourierAvailability {
+  id         String    @id @default(uuid())
+  courierId  String
+  dayOfWeek  Int
+  startTime  String?
+  endTime    String?
+  available  Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  // Relations
+  courier    User      @relation("CourierAvailability", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@unique([courierId, dayOfWeek])
+  @@index([courierId])
+  @@index([dayOfWeek])
+  @@index([courierId, available])
+}
+
+model CourierPreferences {
+  id                      String    @id @default(uuid())
+  courierId               String    @unique
+  maxConcurrentDeliveries Int       @default(3)
+  maxDistancePerDelivery  Float     @default(15)
+  acceptsInterCity        Boolean   @default(false)
+  preferredPackageTypes   String?   // JSON array
+  requiresAdvanceNotice   Boolean   @default(false)
+  advanceNoticeHours      Int       @default(0)
+  minimumEarningPerDelivery Float   @default(500)
+  preferredPaymentMethod  String    @default("bank_transfer")
+  acceptsCOD              Boolean   @default(true)
+  maxCODAmount            Float     @default(50000)
+  preferredAreas          String?   // JSON array
+  blockedAreas            String?   // JSON array
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  // Relations
+  courier                 User      @relation("CourierPreferences", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@index([courierId])
+  @@index([acceptsInterCity])
+}
+
+model CourierGuarantor {
+  id                 String    @id @default(uuid())
+  courierId          String    @unique
+  fullName           String
+  phoneNumber        String
+  email              String?
+  relationship       String
+  address            String?
+  occupation         String?
+  verificationStatus String    @default("pending")
+  verifiedAt         DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  // Relations
+  courier            User      @relation("CourierGuarantor", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@index([courierId])
+  @@index([verificationStatus])
+}
+
+model PaymentMethod {
+  id                     String    @id @default(uuid())
+  userId                 String
+  type                   String
+  provider               String?
+  last4                  String?
+  brand                  String?
+  expiryMonth            Int?
+  expiryYear             Int?
+  holderName             String?
+  isDefault              Boolean   @default(false)
+  stripePaymentMethodId  String?
+  flutterwaveToken       String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  
+  // Relations
+  user                   User      @relation("UserPaymentMethods", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([userId, isDefault])
+}
+
+model CourierAssignmentLog {
+  id                String    @id @default(uuid())
+  deliveryId        String
+  courierId         String
+  assignmentType    String
+  score             Float?
+  distanceFromPickup Float?
+  courierRating     Float?
+  courierWorkload   Int?
+  accepted          Boolean   @default(false)
+  acceptedAt        DateTime?
+  rejectedAt        DateTime?
+  rejectionReason   String?
+  createdAt         DateTime  @default(now())
+  
+  // Relations
+  delivery          Delivery  @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  courier           User      @relation("CourierAssignments", fields: [courierId], references: [id], onDelete: Cascade)
+  
+  @@index([deliveryId])
+  @@index([courierId])
+  @@index([accepted])
+  @@index([createdAt])
+}
+
+// ===== NEW MODELS =====
+
+// Wallet System
+model Wallet {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  balance         Float     @default(0)
+  currency        String    @default("NGN")
+  lockedBalance   Float     @default(0)  // For pending transactions
+  totalEarnings   Float     @default(0)  // Lifetime earnings (sellers)
+  totalSpent      Float     @default(0)  // Lifetime spending (buyers)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation("UserWallet", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([balance])
+}
+
+model Transaction {
+  id              String    @id @default(uuid())
+  userId          String
+  type            TransactionType
+  amount          Float
+  balanceBefore   Float
+  balanceAfter    Float
+  currency        String    @default("NGN")
+  status          TransactionStatus @default(pending)
+  reference       String    @unique
+  description     String?
+  metadata        Json?     // Order ID, refund ID, etc.
+  paymentMethod   String?
+  paymentProvider String?
+  externalRef     String?   // External payment reference
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([reference])
+}
+
+enum TransactionType {
+  deposit
+  withdrawal
+  order_payment
+  order_refund
+  seller_payout
+  commission_fee
+  delivery_fee
+  wallet_transfer
+}
+
+enum TransactionStatus {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+}
+
+// Product Variants & Inventory
+model ProductVariant {
+  id              String    @id @default(uuid())
+  productId       String
+  sku             String    @unique
+  name            String    // e.g., "Red - Large"
+  size            String?
+  color           String?
+  colorHex        String?
+  material        String?
+  price           Float?    // Override product price if different
+  stockQuantity   Int       @default(0)
+  lowStockThreshold Int     @default(5)
+  isActive        Boolean   @default(true)
+  weight          Float?
+  dimensions      String?   // JSON
+  imageUrl        String?
+  order           Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@index([productId])
+  @@index([sku])
+  @@index([stockQuantity])
+  @@index([isActive])
+}
+
+enum ProductStatus {
+  draft
+  active
+  out_of_stock
+  discontinued
+  archived
+}
+
+// Tax & Invoices
+model Invoice {
+  id              String    @id @default(uuid())
+  orderId         String    @unique
+  invoiceNumber   String    @unique
+  subtotal        Float
+  taxAmount       Float
+  taxRate         Float
+  taxRegion       String
+  totalAmount     Float
+  currency        String    @default("NGN")
+  pdfUrl          String?
+  pdfPublicId     String?
+  emailSent       Boolean   @default(false)
+  emailSentAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([orderId])
+  @@index([invoiceNumber])
+  @@index([createdAt])
+}
+
+// Return & Exchange System
+model ReturnRequest {
+  id              String    @id @default(uuid())
+  orderId         String    @unique
+  userId          String
+  reason          ReturnReason
+  description     String?
+  images          String?   // JSON array of image URLs
+  status          ReturnStatus @default(pending)
+  adminNotes      String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectedBy      String?
+  rejectedAt      DateTime?
+  refundAmount    Float?
+  refundedAt      DateTime?
+  trackingNumber  String?
+  returnShipped   Boolean   @default(false)
+  returnReceived  Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user            User      @relation("UserReturnRequests", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ReturnReason {
+  damaged
+  defective
+  wrong_item
+  not_as_described
+  size_issue
+  changed_mind
+  quality_issue
+  other
+}
+
+enum ReturnStatus {
+  pending
+  approved
+  rejected
+  shipped
+  received
+  refunded
+  closed
+}
+
+// Wishlist
+model Wishlist {
+  id              String    @id @default(uuid())
+  userId          String
+  productId       String
+  notes           String?
+  createdAt       DateTime  @default(now())
+  
+  user            User      @relation("UserWishlists", fields: [userId], references: [id], onDelete: Cascade)
+  product         Product   @relation("WishlistProducts", fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+// Product View History
+model ProductView {
+  id              String    @id @default(uuid())
+  userId          String?
+  productId       String
+  sessionId       String?   // For guest users
+  viewCount       Int       @default(1)
+  lastViewedAt    DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  
+  user            User?     @relation("UserProductViews", fields: [userId], references: [id], onDelete: Cascade)
+  product         Product   @relation("ProductViews", fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@index([sessionId])
+  @@index([lastViewedAt])
+}
+
+// Product Recommendations
+model ProductRecommendation {
+  id              String    @id @default(uuid())
+  productId       String
+  recommendedProductId String
+  score           Float     @default(0)
+  type            RecommendationType
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  product         Product   @relation("RecommendedProducts", fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([productId, recommendedProductId, type])
+  @@index([productId])
+  @@index([score])
+}
+
+enum RecommendationType {
+  similar
+  frequently_bought_together
+  you_may_also_like
+  trending
+  based_on_history
+}
+
+// Product Q&A
+model ProductQA {
+  id              String    @id @default(uuid())
+  productId       String
+  userId          String
+  question        String
+  answer          String?
+  answeredAt      DateTime?
+  answeredBy      String?   // Usually seller
+  helpful         Int       @default(0)
+  notHelpful      Int       @default(0)
+  isPublic        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  product         Product   @relation("ProductQuestions", fields: [productId], references: [id], onDelete: Cascade)
+  user            User      @relation("UserProductQAs", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([productId])
+  @@index([userId])
+  @@index([isPublic])
+  @@index([createdAt])
+}
+
+// Size Guides
+model SizeGuide {
+  id              String    @id @default(uuid())
+  productId       String
+  category        String    // clothing, shoes, accessories
+  region          String    @default("US") // US, UK, EU
+  measurements    Json      // Size chart data
+  imageUrl        String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  product         Product   @relation("ProductSizeGuides", fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@index([productId])
+  @@index([category])
+}
+
+// Seller Badges & Verification
+model SellerBadge {
+  id              String    @id @default(uuid())
+  userId          String
+  badgeType       BadgeType
+  awardedAt       DateTime  @default(now())
+  expiresAt       DateTime?
+  isActive        Boolean   @default(true)
+  metadata        Json?     // Requirements met, milestones
+  
+  user            User      @relation("SellerBadges", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([badgeType])
+  @@index([isActive])
+}
+
+enum BadgeType {
+  verified_seller        // 50+ sales
+  top_seller            // 500+ sales, 4.5+ rating
+  trusted_seller        // 1000+ sales, 4.8+ rating
+  fast_shipper          // 95%+ on-time shipping
+  responsive_seller     // 90%+ response rate
+  quality_products      // 4.5+ product ratings
+  new_seller           // First 30 days
+}
+
+// Seller Tiers for Commission
+model SellerTier {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  level           Int       @unique
+  minSales        Int
+  maxSales        Int?
+  commissionRate  Float     // Percentage
+  benefits        Json?     // Additional benefits
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([level])
+}
+
+// Support Ticket System
+model SupportTicket {
+  id              String    @id @default(uuid())
+  userId          String
+  ticketNumber    String    @unique
+  subject         String
+  category        TicketCategory
+  priority        TicketPriority @default(medium)
+  status          TicketStatus @default(open)
+  description     String
+  attachments     String?   // JSON array
+  assignedTo      String?
+  assignedAt      DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  rating          Int?      // 1-5 stars
+  feedback        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation("UserTickets", fields: [userId], references: [id], onDelete: Cascade)
+  agent           User?     @relation("AgentTickets", fields: [assignedTo], references: [id])
+  replies         TicketReply[]
+  
+  @@index([userId])
+  @@index([ticketNumber])
+  @@index([status])
+  @@index([category])
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+model TicketReply {
+  id              String    @id @default(uuid())
+  ticketId        String
+  userId          String
+  message         String
+  attachments     String?   // JSON array
+  isInternal      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  ticket          SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+enum TicketCategory {
+  order_issue
+  payment_issue
+  delivery_issue
+  product_inquiry
+  account_issue
+  technical_issue
+  refund_request
+  seller_inquiry
+  general_inquiry
+  other
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum TicketStatus {
+  open
+  assigned
+  in_progress
+  waiting_customer
+  resolved
+  closed
+}
+
+// Seller Follow System
+model SellerFollow {
+  id              String    @id @default(uuid())
+  buyerId         String
+  sellerId        String
+  createdAt       DateTime  @default(now())
+  
+  buyer           User      @relation("BuyerFollows", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller          User      @relation("SellerFollowers", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  @@unique([buyerId, sellerId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([createdAt])
+}
+
+// Cart Abandonment Tracking
+model CartAbandonment {
+  id              String    @id @default(uuid())
+  userId          String?
+  sessionId       String?
+  email           String?
+  cartData        Json      // Product IDs, quantities
+  totalValue      Float
+  emailSent1hr    Boolean   @default(false)
+  emailSent24hr   Boolean   @default(false)
+  emailSent3day   Boolean   @default(false)
+  recovered       Boolean   @default(false)
+  recoveredAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User?     @relation("UserCartAbandonments", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([email])
+  @@index([recovered])
+  @@index([createdAt])
+}
+
+// FAQ & Help Center
+model FaqCategory {
+  id              String    @id @default(uuid())
+  name            String
+  slug            String    @unique
+  description     String?
+  icon            String?
+  order           Int       @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  articles        FaqArticle[]
+  
+  @@index([slug])
+  @@index([order])
+  @@index([isActive])
+}
+
+model FaqArticle {
+  id              String    @id @default(uuid())
+  categoryId      String
+  title           String
+  slug            String    @unique
+  content         String
+  tags            String?   // Comma-separated
+  viewCount       Int       @default(0)
+  helpfulCount    Int       @default(0)
+  notHelpfulCount Int       @default(0)
+  order           Int       @default(0)
+  isPublished     Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  category        FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isPublished])
+  @@index([viewCount])
+}
+
+// User Settings & Preferences
+model UserSettings {
+  id                      String    @id @default(uuid())
+  userId                  String    @unique
+  theme                   String    @default("light") // light, dark, auto
+  language                String    @default("en")
+  currency                String    @default("NGN")
+  emailNotifications      Boolean   @default(true)
+  pushNotifications       Boolean   @default(true)
+  smsNotifications        Boolean   @default(false)
+  orderUpdates            Boolean   @default(true)
+  promotionalEmails       Boolean   @default(true)
+  productRecommendations  Boolean   @default(true)
+  twoFactorEnabled        Boolean   @default(false)
+  sessionTimeout          Int       @default(30) // minutes
+  privacySettings         Json?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  @@index([userId])
+}
+
+// Analytics & Tracking
+model AnalyticsEvent {
+  id              String    @id @default(uuid())
+  userId          String?
+  sessionId       String?
+  eventType       String
+  eventName       String
+  metadata        Json?
+  page            String?
+  referrer        String?
+  userAgent       String?
+  ipAddress       String?
+  country         String?
+  city            String?
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([eventName])
+  @@index([createdAt])
+}
+
+// Fraud Detection
+model FraudAlert {
+  id              String    @id @default(uuid())
+  userId          String?
+  orderId         String?
+  alertType       FraudAlertType
+  severity        FraudSeverity
+  description     String
+  indicators      Json      // Fraud indicators detected
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  resolution      String?
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([orderId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([resolved])
+  @@index([createdAt])
+}
+
+enum FraudAlertType {
+  rapid_orders
+  payment_failure
+  suspicious_location
+  velocity_check
+  high_value_order
+  multiple_accounts
+  chargeback_risk
+}
+
+enum FraudSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+// Digital Product Downloads
+model DigitalDownload {
+  id              String    @id @default(uuid())
+  orderId         String
+  productId       String
+  userId          String
+  downloadToken   String    @unique
+  downloadCount   Int       @default(0)
+  maxDownloads    Int?      // null = unlimited
+  expiresAt       DateTime? // null = never expires
+  ipAddress       String?
+  userAgent       String?
+  lastDownloadAt  DateTime?
+  createdAt       DateTime  @default(now())
+  
+  @@index([orderId])
+  @@index([productId])
+  @@index([userId])
+  @@index([downloadToken])
+  @@index([expiresAt])
+}
+
+// Product Comparison
+model ProductComparison {
+  id          String    @id @default(uuid())
+  userId      String
+  productIds  String    // JSON array of product IDs
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+}
+
+// Recently Viewed
+model RecentlyViewed {
+  id          String    @id @default(uuid())
+  userId      String?
+  sessionId   String?   // For non-logged-in users
+  productId   String
+  viewedAt    DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([productId])
+  @@index([viewedAt])
+}
+
+// Review Photos
+model ReviewPhoto {
+  id          String    @id @default(uuid())
+  reviewId    String
+  url         String
+  thumbnailUrl String?
+  publicId    String    @unique
+  createdAt   DateTime  @default(now())
+  
+  @@index([reviewId])
+}

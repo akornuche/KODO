@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Convert OG Image to PNG</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #canvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>KODO OG Image Converter</h1>
+    <div class="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Open this file in your browser</li>
+            <li>The image will render on the canvas below</li>
+            <li>Click "Download PNG" to save the file</li>
+            <li>Save as "og-image.png" in the public folder</li>
+        </ol>
+    </div>
+
+    <canvas id="canvas" width="1200" height="630"></canvas>
+    <button onclick="downloadPNG()">Download PNG</button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Create gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+        gradient.addColorStop(0, '#10b981');
+        gradient.addColorStop(1, '#059669');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1200, 630);
+
+        // Draw logo circle (outer glow)
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(600, 250, 80, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw logo circle (inner)
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(600, 250, 60, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw K letter
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 80px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('K', 600, 250);
+
+        // Draw KODO brand name
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 72px Arial, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('KODO', 600, 380);
+
+        // Draw tagline
+        ctx.globalAlpha = 0.9;
+        ctx.font = '32px Arial, sans-serif';
+        ctx.fillText('Buy, Sell & Deliver with Real-time Tracking', 600, 440);
+
+        // Draw location badge background
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(500, 480, 200, 50, 25);
+        ctx.fill();
+
+        // Draw location text
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 24px Arial, sans-serif';
+        ctx.fillText('🇳🇬 Nigeria', 600, 505);
+
+        function downloadPNG() {
+            const link = document.createElement('a');
+            link.download = 'og-image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
