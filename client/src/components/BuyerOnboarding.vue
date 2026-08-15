@@ -638,7 +638,11 @@ export default {
         error.value = null;
         saving.value = true;
 
+        // Complete buyer-specific onboarding
         await api.post('/buyer-onboarding/complete');
+        
+        // Update general onboarding status
+        await api.post('/onboarding/complete', { role: 'buyer' });
         
         steps.value[2].completed = true;
         completed.value = true;

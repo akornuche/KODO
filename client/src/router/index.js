@@ -214,6 +214,25 @@ const router = createRouter({
       component: () => import('../components/FraudDetection.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
+    // Onboarding Flows
+    {
+      path: '/onboarding/buyer',
+      name: 'buyer-onboarding',
+      component: () => import('../components/BuyerOnboarding.vue'),
+      meta: { requiresAuth: true, requiresRole: 'buyer' },
+    },
+    {
+      path: '/onboarding/seller',
+      name: 'seller-onboarding',
+      component: () => import('../components/SellerOnboarding.vue'),
+      meta: { requiresAuth: true, requiresRole: 'seller' },
+    },
+    {
+      path: '/onboarding/courier',
+      name: 'courier-onboarding',
+      component: () => import('../components/CourierOnboarding.vue'),
+      meta: { requiresAuth: true, requiresRole: 'courier' },
+    },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',

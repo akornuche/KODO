@@ -1038,8 +1038,11 @@ export default {
         // Save preferences
         await api.post('/courier-onboarding/preferences', preferences);
 
-        // Complete onboarding
+        // Complete courier-specific onboarding
         await api.post('/courier-onboarding/complete');
+        
+        // Update general onboarding status
+        await api.post('/onboarding/complete', { role: 'courier' });
 
         steps.value[3].completed = true;
         completed.value = true;

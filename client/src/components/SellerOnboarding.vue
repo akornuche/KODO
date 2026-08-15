@@ -434,7 +434,12 @@ export default {
     const completeOnboarding = async () => {
       saving.value = true;
       try {
+        // Complete seller-specific onboarding
         await api.post('/seller-onboarding/complete');
+        
+        // Update general onboarding status
+        await api.post('/onboarding/complete', { role: 'seller' });
+        
         onboardingComplete.value = true;
       } catch (error) {
         console.error('Failed to complete onboarding:', error);

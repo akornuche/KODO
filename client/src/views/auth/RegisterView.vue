@@ -278,7 +278,16 @@ const handleRegister = async () => {
   });
 
   if (result.success) {
-    router.push('/dashboard');
+    // Redirect to onboarding based on role
+    const onboardingRoutes = {
+      buyer: '/onboarding/buyer',
+      seller: '/onboarding/seller',
+      courier: '/onboarding/courier',
+      admin: '/dashboard' // Admins don't have onboarding
+    };
+    
+    const targetRoute = onboardingRoutes[form.role] || '/dashboard';
+    router.push(targetRoute);
   }
 };
 </script>
