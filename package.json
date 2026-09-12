@@ -4,7 +4,7 @@
   "private": true,
   "description": "KODO - E-commerce platform with delivery and payments",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "workspaces": [
     "client",
