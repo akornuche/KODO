@@ -17,7 +17,9 @@
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:coverage": "cross-env NODE_ENV=test jest --coverage",
     "test:integration": "cross-env NODE_ENV=test jest --testPathPatterns=tests/integration",
-    "test:unit": "cross-env NODE_ENV=test jest --testPathPatterns=tests/unit"
+    "test:unit": "cross-env NODE_ENV=test jest --testPathPatterns=tests/unit",
+    "perf:check": "node scripts/performance-check.js",
+    "perf:monitor": "node scripts/performance-check.js && watch 'npm run perf:check' ."
   },
   "keywords": [],
   "author": "",
