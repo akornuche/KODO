@@ -12,54 +12,11 @@
   "lang": "en",
   "dir": "ltr",
   "categories": ["shopping", "business", "productivity", "lifestyle"],
-  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "icons": [
     {
-      "src": "/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/kodo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
@@ -69,66 +26,24 @@
       "short_name": "Orders",
       "description": "View your orders",
       "url": "/orders",
-      "icons": [
-        {
-          "src": "/icon-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
+      "icons": [{ "src": "/kodo-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
       "name": "Browse Products",
       "short_name": "Browse",
       "description": "Browse available products",
       "url": "/products",
-      "icons": [
-        {
-          "src": "/icon-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
+      "icons": [{ "src": "/kodo-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
       "name": "My Bids",
       "short_name": "Bids",
       "description": "View your bids and offers",
       "url": "/bids",
-      "icons": [
-        {
-          "src": "/icon-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
-    }
-  ],
-  "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=com.kodo.marketplace",
-      "id": "com.kodo.marketplace"
-    },
-    {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/app/kodo-marketplace/id123456789"
+      "icons": [{ "src": "/kodo-icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ],
   "prefer_related_applications": false,
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Browse products on KODO"
-    },
-    {
-      "src": "/screenshot-desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "KODO Desktop Experience"
-    }
-  ],
   "share_target": {
     "action": "/share",
     "method": "POST",
@@ -137,33 +52,20 @@
       "title": "title",
       "text": "text",
       "url": "url",
-      "files": [
-        {
-          "name": "images",
-          "accept": ["image/*"]
-        }
-      ]
+      "files": [{ "name": "images", "accept": ["image/*"] }]
     }
   },
-  "protocol_handlers": [
-    {
-      "protocol": "web+kodo",
-      "url": "/open?url=%s"
+  "protocol_handlers": [{
+    "protocol": "web+kodo",
+    "url": "/open?url=%s"
+  }],
+  "file_handlers": [{
+    "action": "/open-image",
+    "accept": {
+      "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"]
     }
-  ],
-  "file_handlers": [
-    {
-      "action": "/open-image",
-      "accept": {
-        "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"]
-      }
-    }
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
+  }],
+  "edge_side_panel": { "preferred_width": 400 },
   "handle_links": "preferred",
-  "launch_handler": {
-    "client_mode": ["navigate-existing", "auto"]
-  }
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] }
 }

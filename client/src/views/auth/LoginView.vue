@@ -37,15 +37,32 @@
           <!-- Password -->
           <div>
             <label for="password" class="sr-only">Password</label>
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-              placeholder="Password"
-              :disabled="authStore.loading"
-            />
+            <div class="relative">
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                required
+                class="appearance-none rounded-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                :disabled="authStore.loading"
+              />
+              <button
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                :disabled="authStore.loading"
+              >
+                <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -91,10 +108,10 @@
       <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 class="text-sm font-semibold text-blue-900 mb-2">Test Accounts (Password: Password123!)</h3>
         <div class="space-y-1 text-xs text-blue-800">
-          <p><strong>Admin:</strong> admin@kodo.com</p>
-          <p><strong>Seller:</strong> seller1@kodo.com</p>
-          <p><strong>Buyer:</strong> buyer1@kodo.com</p>
-          <p><strong>Courier:</strong> courier1@kodo.com</p>
+          <p><strong>Admin:</strong> admin@example.com</p>
+          <p><strong>Seller:</strong> seller1@example.com</p>
+          <p><strong>Buyer:</strong> buyer1@example.com</p>
+          <p><strong>Courier:</strong> courier1@example.com</p>
         </div>
       </div>
     </div>
@@ -102,7 +119,7 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import { useSEO } from '../../composables/useSEO';
@@ -125,6 +142,8 @@ const form = reactive({
   password: '',
   rememberMe: false,
 });
+
+const showPassword = ref(false);
 
 const handleLogin = async () => {
   authStore.clearError();

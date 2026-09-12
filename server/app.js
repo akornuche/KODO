@@ -3,7 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const mongoSanitize = require('express-mongo-sanitize');
+const errorMonitoring = require('./src/lib/errorMonitoring');
+const securityProduction = require('./src/middleware/securityProduction');
 const authRoutes = require('./src/routes/auth');
 const protectedRoutes = require('./src/routes/protected');
 const productRoutes = require('./src/routes/products');
@@ -88,8 +89,20 @@ const app = express();
   }
 })();
 
+// Initialize Sentry for error monitoring
+errorMonitoring.initializeSentry();
+
+// Import production security middleware
+const securityProduction = require('./src/middleware/securityProduction');
+
 // Trust proxy (needed for rate limiting behind reverse proxies)
 app.set('trust proxy', 1);
+
+// Sentry request handler (BEFORE route handlers)
+app.use(errorMonitoring.sentryRequestHandler());
+
+// HTTPS Redirect (in production)
+app.use(securityProduction.httpsRedirect);
 
 // Request ID and Logging (before other middleware)
 app.use(requestId);
@@ -113,28 +126,20 @@ app.use(compression({
   threshold: 1024, // Only compress responses larger than 1KB
 }));
 
-// Security Headers
-app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
-}));
+// Production Security Headers (Helmet)
+app.use(securityProduction.getHelmetConfig());
 
-// CORS Configuration
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS
-  ? process.env.CORS_ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:3000'];
+// CORS Configuration (Production-aware)
+app.use(cors(securityProduction.getCorsConfig()));
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+// Additional Security Headers
+app.use(securityProduction.securityHeaders);
+
+// Input Sanitization
+app.use(securityProduction.validateInput);
+
+// Mongo Sanitization (prevent NoSQL injection)
+app.use(securityProduction.mongoSanitize);
 
 // Security Headers
 app.use((req, res, next) => {
@@ -196,11 +201,12 @@ app.use('/api/webhooks', webhookRoutes);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Apply rate limiting to API routes
+app.use('/api/auth', securityProduction.authLimiter);
+app.use('/api/', securityProduction.apiLimiter);
+
 // Serve static files (uploaded images)
 app.use('/uploads', express.static('uploads'));
-
-// Sanitize data to prevent NoSQL injection
-app.use(mongoSanitize());
 
 // General rate limiting
 app.use('/api/', rateLimiter.generalLimiter);
@@ -248,8 +254,9 @@ app.use('/api/returns', returnRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api', productQARoutes);
-app.use('/api', sellerFollowRoutes);
+// FAQ read endpoints are public; mount them before sellerFollowRoutes, whose router-level auth applies to all /api paths.
 app.use('/api/faq', faqRoutes);
+app.use('/api', sellerFollowRoutes);
 app.use('/api/cart', cartAbandonmentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/addresses', addressRoutes);
@@ -273,6 +280,9 @@ app.use('/api', protectedRoutes);
 
 // 404 handler (must be before error handler)
 app.use(notFoundHandler);
+
+// Sentry error handler (AFTER route handlers, BEFORE custom error handler)
+app.use(errorMonitoring.sentryErrorHandler());
 
 // Global error handler
 app.use(errorHandler);

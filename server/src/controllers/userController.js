@@ -687,6 +687,9 @@ exports.getBuyerStats = async (req, res) => {
       totalOrders,
       pendingOrders,
       totalSpent,
+      averageOrderValue,
+      topCategories,
+      recentOrders,
     ] = await Promise.all([
       // Active bids (pending or with offers)
       prisma.bid.count({
@@ -714,6 +717,39 @@ exports.getBuyerStats = async (req, res) => {
         },
         _sum: { totalAmount: true },
       }),
+      // Average order value
+      prisma.order.aggregate({
+        where: {
+          buyerId: userId,
+          status: { in: ['paid', 'shipped', 'delivered'] },
+        },
+        _avg: { totalAmount: true },
+      }),
+      // Top categories (most purchased)
+      prisma.order.groupBy({
+        by: ['product'],
+        where: {
+          buyerId: userId,
+        },
+        _count: {
+          id: true,
+        },
+        take: 3,
+      }),
+      // Recent orders (last 5)
+      prisma.order.findMany({
+        where: { buyerId: userId },
+        include: {
+          product: {
+            select: {
+              title: true,
+              category: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
     ]);
 
     const stats = {
@@ -721,6 +757,16 @@ exports.getBuyerStats = async (req, res) => {
       totalOrders,
       pendingOrders,
       totalSpent: totalSpent._sum.totalAmount || 0,
+      averageOrderValue: Math.round((averageOrderValue._avg.totalAmount || 0) * 100) / 100,
+      orderCount: totalOrders,
+      recentOrdersCount: recentOrders.length,
+      activityMetrics: {
+        ordersThisMonth: recentOrders.filter(o => {
+          const orderDate = new Date(o.createdAt);
+          const now = new Date();
+          return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+        }).length,
+      },
     };
 
     logger.info('Buyer dashboard stats retrieved', {
@@ -755,6 +801,9 @@ exports.getSellerStats = async (req, res) => {
       totalSales,
       pendingSales,
       totalRevenue,
+      averageSalePrice,
+      topProducts,
+      recentSales,
     ] = await Promise.all([
       // Total products
       prisma.product.count({
@@ -789,6 +838,51 @@ exports.getSellerStats = async (req, res) => {
         },
         _sum: { totalAmount: true },
       }),
+      // Average sale price
+      prisma.order.aggregate({
+        where: {
+          product: { sellerId: userId },
+          status: { in: ['paid', 'shipped', 'delivered'] },
+        },
+        _avg: { totalAmount: true },
+      }),
+      // Top products (most sold)
+      prisma.order.groupBy({
+        by: ['productId'],
+        where: {
+          product: { sellerId: userId },
+        },
+        _count: {
+          id: true,
+        },
+        orderBy: {
+          _count: {
+            id: 'desc',
+          },
+        },
+        take: 3,
+      }),
+      // Recent sales (last 5)
+      prisma.order.findMany({
+        where: {
+          product: { sellerId: userId },
+        },
+        include: {
+          product: {
+            select: {
+              title: true,
+              price: true,
+            },
+          },
+          buyer: {
+            select: {
+              username: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
     ]);
 
     const stats = {
@@ -797,6 +891,15 @@ exports.getSellerStats = async (req, res) => {
       totalSales,
       pendingSales,
       totalRevenue: totalRevenue._sum.totalAmount || 0,
+      averageSalePrice: Math.round((averageSalePrice._avg.totalAmount || 0) * 100) / 100,
+      recentSalesCount: recentSales.length,
+      activityMetrics: {
+        salesThisMonth: recentSales.filter(o => {
+          const orderDate = new Date(o.createdAt);
+          const now = new Date();
+          return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+        }).length,
+      },
     };
 
     logger.info('Seller dashboard stats retrieved', {
@@ -830,6 +933,9 @@ exports.getCourierStats = async (req, res) => {
       activeDeliveries,
       completedDeliveries,
       totalEarnings,
+      averageFee,
+      deliveriesThisMonth,
+      acceptanceRate,
     ] = await Promise.all([
       // Available deliveries
       prisma.delivery.count({
@@ -860,13 +966,53 @@ exports.getCourierStats = async (req, res) => {
         },
         _sum: { fee: true },
       }),
+      // Average fee per delivery
+      prisma.delivery.aggregate({
+        where: {
+          courierId: userId,
+          status: 'delivered',
+        },
+        _avg: { fee: true },
+      }),
+      // Deliveries this month
+      prisma.delivery.count({
+        where: {
+          courierId: userId,
+          status: 'delivered',
+          deliveredAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+          },
+        },
+      }),
+      // Acceptance rate (completed / assigned)
+      prisma.delivery.count({
+        where: {
+          courierId: userId,
+          status: { in: ['assigned', 'picked_up', 'in_transit', 'delivered'] },
+        },
+      }),
     ]);
+
+    const totalAssigned = await prisma.delivery.count({
+      where: {
+        courierId: userId,
+        status: { in: ['assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'] },
+      },
+    });
 
     const stats = {
       availableDeliveries,
       activeDeliveries,
       completedDeliveries,
       totalEarnings: totalEarnings._sum.fee || 0,
+      averageFee: Math.round((averageFee._avg.fee || 0) * 100) / 100,
+      deliveriesThisMonth,
+      acceptanceRate: totalAssigned > 0 ? Math.round((completedDeliveries / totalAssigned) * 100) : 0,
+      activityMetrics: {
+        onDutyNow: activeDeliveries,
+        successRate: totalAssigned > 0 ? Math.round((completedDeliveries / totalAssigned) * 100) : 0,
+      },
     };
 
     logger.info('Courier dashboard stats retrieved', {

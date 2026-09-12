@@ -101,3 +101,15 @@ export const getImageUrl = (imagePath) => {
   }
   return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'}/${imagePath}`;
 };
+
+export const formatBidStatus = (status) => {
+  const statusMap = {
+    pending: 'Pending',
+    offer_received: 'Offer Received',
+    offer_sent: 'Offer Sent',
+    accepted: 'Accepted',
+    rejected: 'Rejected',
+    completed: 'Completed',
+  };
+  return statusMap[status] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown');
+};

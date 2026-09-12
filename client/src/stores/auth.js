@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
 
         return { success: true };
       } catch (error) {
-        this.error = error.response?.data?.error || 'Registration failed';
+        this.error = error.response?.data?.message || error.response?.data?.error || 'Registration failed';
         return { success: false, error: this.error };
       } finally {
         this.loading = false;
@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
 
         return { success: true };
       } catch (error) {
-        this.error = error.response?.data?.error || 'Login failed';
+        this.error = error.response?.data?.message || error.response?.data?.error || 'Login failed';
         return { success: false, error: this.error };
       } finally {
         this.loading = false;
@@ -74,8 +74,9 @@ export const useAuthStore = defineStore('auth', {
     async fetchProfile() {
       try {
         const response = await api.get('/api/auth/profile');
-        this.user = response.data;
-        localStorage.setItem('user', JSON.stringify(response.data));
+        const user = response.data.user || response.data;
+        this.user = user;
+        localStorage.setItem('user', JSON.stringify(user));
         return { success: true };
       } catch (error) {
         this.error = error.response?.data?.error || 'Failed to fetch profile';

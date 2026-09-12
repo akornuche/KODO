@@ -20,18 +20,17 @@
         </div>
 
         <div class="space-y-4">
-          <!-- Username -->
+          <!-- Username (Optional - will be auto-generated if not provided) -->
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+            <label for="username" class="block text-sm font-medium text-gray-700">Username <span class="text-gray-500 text-xs">(Optional - auto-generated if not provided)</span></label>
             <input
               id="username"
               v-model="form.username"
               type="text"
-              required
               minlength="3"
               maxlength="50"
               class="mt-1 input"
-              placeholder="johndoe"
+              placeholder="johndoe (or leave blank for auto-generation)"
               :disabled="authStore.loading"
             />
           </div>
@@ -53,17 +52,34 @@
           <!-- Password -->
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              required
-              minlength="8"
-              class="mt-1 input"
-              placeholder="Min. 8 characters"
-              :disabled="authStore.loading"
-              @input="checkPasswordStrength"
-            />
+            <div class="relative mt-1">
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                required
+                minlength="8"
+                class="w-full input pr-10"
+                placeholder="Min. 8 characters"
+                :disabled="authStore.loading"
+                @input="checkPasswordStrength"
+              />
+              <button
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                :disabled="authStore.loading"
+              >
+                <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
+                </svg>
+              </button>
+            </div>
             
             <!-- Password Strength Indicator -->
             <div v-if="form.password" class="mt-2">
@@ -87,15 +103,32 @@
           <!-- Confirm Password -->
           <div>
             <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              v-model="form.confirmPassword"
-              type="password"
-              required
-              class="mt-1 input"
-              placeholder="Re-enter password"
-              :disabled="authStore.loading"
-            />
+            <div class="relative mt-1">
+              <input
+                id="confirmPassword"
+                v-model="form.confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                required
+                class="w-full input pr-10"
+                placeholder="Re-enter password"
+                :disabled="authStore.loading"
+              />
+              <button
+                type="button"
+                @click="showConfirmPassword = !showConfirmPassword"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                :disabled="authStore.loading"
+              >
+                <svg v-if="!showConfirmPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
+                </svg>
+              </button>
+            </div>
             <p v-if="form.confirmPassword && form.password !== form.confirmPassword" class="mt-1 text-sm text-red-600">
               Passwords don't match
             </p>
@@ -175,7 +208,7 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue';
+import { reactive, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import { useSEO } from '../../composables/useSEO';
@@ -200,6 +233,9 @@ const form = reactive({
   role: 'buyer',
   acceptTerms: false,
 });
+
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const roles = [
   {
@@ -252,7 +288,6 @@ const passwordStrength = computed(() => {
 
 const isFormValid = computed(() => {
   return (
-    form.username.length >= 3 &&
     form.email.includes('@') &&
     form.password.length >= 8 &&
     form.password === form.confirmPassword &&

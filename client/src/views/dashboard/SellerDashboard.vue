@@ -1,6 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Seller Dashboard</h1>
+  <DashboardLayout title="Seller Dashboard" :sidebar-menu="sidebarMenu">
 
     <!-- Stats Cards -->
     <div v-if="loading.stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -266,15 +265,25 @@
         </form>
       </div>
     </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useDashboardStore } from '@/stores/dashboard';
-import { formatCurrency, formatDate, formatRelativeTime } from '@/utils/helpers';
+import { formatCurrency, formatBidStatus } from '@/utils/helpers';
+import DashboardLayout from '@/components/DashboardLayout.vue';
+import { ChartBarIcon, PlusIcon, CubeIcon, ShoppingBagIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
 
 const dashboardStore = useDashboardStore();
+
+const sidebarMenu = [
+  { path: '/dashboard', label: 'Overview', icon: ChartBarIcon },
+  { path: '/products/new', label: 'Add Product', icon: PlusIcon },
+  { path: '/products?filter=myproducts', label: 'My Products', icon: CubeIcon },
+  { path: '/orders', label: 'Sales', icon: ShoppingBagIcon },
+  { path: '/chat', label: 'Messages', icon: ChatBubbleLeftIcon },
+];
 
 const sellerStats = computed(() => dashboardStore.sellerStats);
 const receivedBids = computed(() => dashboardStore.receivedBids);
@@ -289,16 +298,6 @@ const offerForm = ref({
   price: '',
   message: '',
 });
-
-const formatBidStatus = (status) => {
-  const statusMap = {
-    pending: 'Pending',
-    offer_sent: 'Offer Sent',
-    accepted: 'Accepted',
-    rejected: 'Rejected',
-  };
-  return statusMap[status] || status;
-};
 
 const openOfferModal = (bid) => {
   selectedBid.value = bid;

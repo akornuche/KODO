@@ -21,13 +21,16 @@ exports.register = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!email || !username || !password) {
+    if (!email || !password) {
       return res.status(400).json({
         error: true,
-        message: 'Email, username, and password are required',
+        message: 'Email and password are required',
         code: 'MISSING_FIELDS',
       });
     }
+
+    // If username not provided, generate from email
+    const generatedUsername = username || email.split('@')[0] + '-' + Math.random().toString(36).substr(2, 5);
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,15 +62,7 @@ exports.register = async (req, res) => {
     }
 
     // Seller-specific validation
-    if (role === 'seller') {
-      if (!sellerNiche) {
-        return res.status(400).json({
-          error: true,
-          message: 'Sellers must select a niche/specialization',
-          code: 'MISSING_NICHE',
-        });
-      }
-
+    if (role === 'seller' && sellerNiche) {
       const validNiches = [
         'Electronics', 'Fashion', 'Home & Garden', 'Sports & Outdoors',
         'Books & Media', 'Toys & Games', 'Health & Beauty', 'Automotive',
@@ -89,7 +84,7 @@ exports.register = async (req, res) => {
       where: {
         OR: [
           { email },
-          { username }
+          { username: generatedUsername }
         ]
       }
     });
@@ -111,14 +106,14 @@ exports.register = async (req, res) => {
     const user = await prisma.user.create({
       data: {
         email,
-        username,
+        username: generatedUsername,
         password: hashedPassword,
         ...(role && { role }),
         ...(firstName && { firstName }),
         ...(lastName && { lastName }),
         ...(phoneNumber && { phoneNumber }),
         ...(role === 'seller' && {
-          businessName: businessName || `${firstName || username}'s Shop`,
+          businessName: businessName || `${firstName || generatedUsername}'s Shop`,
           sellerNiche,
           sellerOnboarded: false,
           onboardingStep: 1, // Set to step 1 after registration
@@ -147,8 +142,21 @@ exports.register = async (req, res) => {
       });
     });
 
+    // Generate a JWT so a newly registered user has an active session.
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
     res.status(201).json({
       message: 'User registered successfully',
+      token,
       user,
     });
   } catch (error) {

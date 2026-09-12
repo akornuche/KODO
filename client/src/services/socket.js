@@ -1,12 +1,23 @@
 import { io } from 'socket.io-client';
 
 let socket = null;
+let socketToken = null;
 
 export const connectSocket = (token) => {
-  if (socket?.connected) {
+  if (!token) {
+    return null;
+  }
+
+  if (socket?.connected && socketToken === token) {
     return socket;
   }
 
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+
+  socketToken = token;
   socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000', {
     auth: { token },
     transports: ['websocket', 'polling'],
@@ -22,6 +33,16 @@ export const connectSocket = (token) => {
 
   socket.on('connect_error', (error) => {
     console.error('❌ Socket.IO Connection Error:', error.message);
+
+    if (error.message === 'Invalid token' || error.message === 'Authentication required') {
+      socket.io.opts.reconnection = false;
+      socket.disconnect();
+      socket = null;
+      socketToken = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new CustomEvent('kodo:auth-invalid'));
+    }
   });
 
   socket.on('disconnect', (reason) => {
@@ -36,6 +57,7 @@ export const disconnectSocket = () => {
     socket.disconnect();
     socket = null;
   }
+  socketToken = null;
 };
 
 export const getSocket = () => {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import dashboardService, { bidService, orderService, deliveryService } from '@/services/dashboardService';
+import { dashboardService, bidService, orderService, deliveryService } from '@/services/dashboardService';
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({

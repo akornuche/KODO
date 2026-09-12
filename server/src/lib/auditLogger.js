@@ -439,14 +439,17 @@ class AuditLogger {
     return async (req, res, next) => {
       const startTime = Date.now();
 
-      // Store original end method
+      // Store original end method and preserve the Express response context.
       const originalEnd = res.end;
+      const auditLogger = this;
 
-      res.end = async function(...args) {
+      res.end = function(...args) {
         const duration = Date.now() - startTime;
 
-        // Log API access
-        await this.logApiEvent('request', {
+        // Finish the HTTP response first; audit logging must not block or break it.
+        const result = originalEnd.apply(res, args);
+
+        auditLogger.logApiEvent('request', {
           userId: req.user?.id,
           ipAddress: req.ip,
           endpoint: req.path,
@@ -455,13 +458,14 @@ class AuditLogger {
           responseTime: duration,
           metadata: {
             userAgent: req.get('User-Agent'),
-            contentLength: res.get('Content-Length')
-          }
+            contentLength: res.get('Content-Length'),
+          },
+        }).catch((error) => {
+          logger.error('Failed to write API audit event:', error);
         });
 
-        // Call original end method
-        originalEnd.apply(this, args);
-      }.bind(this);
+        return result;
+      };
 
       next();
     };

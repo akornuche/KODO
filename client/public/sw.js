@@ -1,53 +1,61 @@
-// Service Worker for Push Notifications
-const CACHE_NAME = 'kodo-v1';
+// Service Worker for Push Notifications and resilient offline navigation
+const CACHE_NAME = 'kodo-v2';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
+  '/kodo-icon.svg',
+  '/og-image.png'
 ];
 
-// Install event - cache resources
+// Install event - cache only resources that are present in the Vite public folder.
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing.');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+      .then((cache) => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches.
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating.');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then((cacheNames) => Promise.all(
+      cacheNames
+        .filter((cacheName) => cacheName !== CACHE_NAME)
+        .map((cacheName) => caches.delete(cacheName))
+    )).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - do not intercept API or cross-origin requests. For app assets,
+// use the cache when available and fall back safely when the network is down.
 self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+  if (
+    event.request.method !== 'GET' ||
+    requestUrl.origin !== self.location.origin ||
+    requestUrl.pathname.startsWith('/api/')
+  ) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.ok) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+        }
+        return networkResponse;
+      }).catch(() => {
+        if (event.request.mode === 'navigate') {
+          return caches.match('/');
+        }
+        return new Response('', { status: 503, statusText: 'Offline' });
+      });
+    })
   );
 });
 
@@ -63,8 +71,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || 'You have a new notification',
-    icon: data.icon || '/icon-192x192.png',
-    badge: '/badge-72x72.png',
+    icon: data.icon || '/kodo-icon.svg',
+    badge: '/kodo-icon.svg',
     image: data.image,
     data: data.data || {},
     requireInteraction: data.requireInteraction || false,

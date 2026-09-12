@@ -15,7 +15,7 @@ describe('API Service', () => {
   });
 
   it('should have baseURL configured', () => {
-    expect(api.defaults.baseURL).toBe('http://localhost:5000');
+    expect(api.defaults.baseURL).toBe('http://localhost:4000/api');
   });
 
   describe('Request Interceptors', () => {

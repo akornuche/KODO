@@ -196,6 +196,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useSEO } from '@/composables/useSEO';
 import recommendationService from '@/services/recommendationService';
+import productService from '@/services/productService';
 import { formatCurrency } from '@/utils/helpers';
 
 const router = useRouter();
@@ -227,10 +228,16 @@ const fetchRecommendations = async () => {
       const personalData = await recommendationService.getRecommendationsBasedOnHistory(5);
       recommendedProducts.value = personalData.products || [];
     } else {
-      // For non-authenticated users, just show general recommendations
-      const data = await recommendationService.getRecommendations(14);
-      trendingProducts.value = data.products?.slice(0, 5) || [];
-      popularProducts.value = data.products?.slice(5, 9) || [];
+      // Anonymous users receive public product listings instead of private recommendations.
+      const data = await productService.getProducts({
+        page: 1,
+        limit: 14,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+      const products = data.products || data.data?.products || [];
+      trendingProducts.value = products.slice(0, 5);
+      popularProducts.value = products.slice(5, 9);
     }
   } catch (err) {
     console.error('Failed to load recommendations:', err);

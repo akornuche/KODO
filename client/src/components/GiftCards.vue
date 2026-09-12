@@ -128,7 +128,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { enhancedFeaturesService } from '@/services/enhancedFeaturesService';
+import { giftCardService } from '@/services/enhancedFeaturesService';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();

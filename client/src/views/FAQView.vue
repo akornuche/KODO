@@ -15,33 +15,51 @@
         />
       </div>
 
-      <!-- Categories -->
-      <div v-if="!searchQuery && categories.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          v-for="category in categories"
-          :key="category.id"
-          class="card hover:shadow-lg transition-shadow cursor-pointer"
-          @click="selectCategory(category)"
-        >
-          <h3 class="font-semibold text-gray-900 mb-2">{{ category.name }}</h3>
-          <p class="text-sm text-gray-600 mb-3">{{ category.description }}</p>
-          <p class="text-sm text-primary-600">{{ category.articleCount || 0 }} articles</p>
+      <!-- Categories and answers -->
+      <div v-if="!searchQuery" class="space-y-8">
+        <div v-if="categories.length > 0" class="space-y-8">
+          <section v-for="category in categories" :key="category.id" class="card">
+            <div class="mb-4">
+              <h2 class="text-xl font-semibold text-gray-900">{{ category.name }}</h2>
+              <p v-if="category.description" class="text-sm text-gray-600 mt-1">{{ category.description }}</p>
+              <p class="text-sm text-primary-600 mt-2">
+                {{ category.articles?.length ?? category.articleCount ?? 0 }} questions
+              </p>
+            </div>
+
+            <div v-if="category.articles?.length" class="space-y-3">
+              <details
+                v-for="article in category.articles"
+                :key="article.id"
+                class="border border-gray-200 rounded-lg bg-white"
+              >
+                <summary class="cursor-pointer px-4 py-3 font-medium text-gray-900">
+                  {{ article.title }}
+                </summary>
+                <p class="px-4 pb-4 text-gray-600 whitespace-pre-line">{{ article.content }}</p>
+              </details>
+            </div>
+          </section>
+        </div>
+
+        <div v-else class="text-center py-12 card">
+          <p class="text-gray-500">No FAQs are available yet.</p>
         </div>
       </div>
 
       <!-- Search Results -->
-      <div v-else-if="searchQuery" class="space-y-4">
+      <div v-else class="space-y-4">
         <div v-if="searching" class="text-center py-8">
           <p class="text-gray-500">Searching...</p>
         </div>
         <div v-else-if="searchResults.length === 0" class="text-center py-8">
           <p class="text-gray-500">No results found for "{{ searchQuery }}"</p>
         </div>
-        <div v-else>
-          <div v-for="article in searchResults" :key="article.id" class="card">
+        <div v-else class="space-y-4">
+          <article v-for="article in searchResults" :key="article.id" class="card">
             <h3 class="font-semibold text-gray-900 mb-2">{{ article.title }}</h3>
-            <p class="text-sm text-gray-600">{{ article.excerpt }}</p>
-          </div>
+            <p class="text-gray-600 whitespace-pre-line">{{ article.content }}</p>
+          </article>
         </div>
       </div>
     </div>
@@ -73,26 +91,25 @@ async function loadCategories() {
 let searchTimeout;
 async function handleSearch() {
   clearTimeout(searchTimeout);
-  
-  if (!searchQuery.value.trim()) {
+  const query = searchQuery.value.trim();
+
+  if (query.length < 2) {
     searchResults.value = [];
+    searching.value = false;
     return;
   }
 
   searching.value = true;
   searchTimeout = setTimeout(async () => {
     try {
-      const data = await faqService.search(searchQuery.value);
+      const data = await faqService.search(query);
       searchResults.value = data.articles || [];
     } catch (error) {
       console.error('Failed to search FAQs:', error);
+      searchResults.value = [];
     } finally {
       searching.value = false;
     }
   }, 300);
-}
-
-function selectCategory(category) {
-  alert(`Viewing category: ${category.name}\n\nThis will show all articles in this category.`);
 }
 </script>

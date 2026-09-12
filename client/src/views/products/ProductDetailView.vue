@@ -652,16 +652,25 @@ const answerForm = ref({
 useProductSEO(product);
 
 // Breadcrumb Navigation
-watch(product, (newProduct) => {
-  if (newProduct) {
-    useBreadcrumbs([
+const breadcrumbs = computed(() => {
+  if (!product.value) {
+    return [
       { name: 'Home', url: '/' },
       { name: 'Products', url: '/products' },
-      ...(newProduct.category ? [{ name: newProduct.category, url: `/products?category=${encodeURIComponent(newProduct.category)}` }] : []),
-      { name: newProduct.title, url: `/products/${newProduct.id}` }
-    ]);
+    ];
   }
+
+  return [
+    { name: 'Home', url: '/' },
+    { name: 'Products', url: '/products' },
+    ...(product.value.category
+      ? [{ name: product.value.category, url: `/products?category=${encodeURIComponent(product.value.category)}` }]
+      : []),
+    { name: product.value.title, url: `/products/${product.value.id}` },
+  ];
 });
+
+useBreadcrumbs(breadcrumbs);
 
 const currentImage = computed(() => {
   if (!product.value?.images || !product.value.images.length) {

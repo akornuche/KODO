@@ -2,7 +2,11 @@
   <div v-if="showInstallPrompt" class="pwa-install-banner">
     <div class="pwa-banner-content">
       <div class="pwa-banner-icon">
-        <img src="/icon-96x96.png" alt="KODO App Icon" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 4 20 4 20 14"></polyline>
+          <path d="M3.9 11.9a4 4 0 0 1 6.7-6.7"></path>
+          <path d="M12 20v-8.3a4 4 0 0 1 5.7-5.7"></path>
+        </svg>
       </div>
       <div class="pwa-banner-text">
         <h3>Install KODO App</h3>
@@ -124,6 +128,12 @@ const dismissPrompt = () => {
   border-radius: 8px;
 }
 
+.pwa-banner-icon svg {
+  width: 48px;
+  height: 48px;
+  color: #10b981;
+}
+
 .pwa-banner-text {
   flex: 1;
 }
@@ -189,6 +199,11 @@ const dismissPrompt = () => {
   }
 
   .pwa-banner-icon img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pwa-banner-icon svg {
     width: 40px;
     height: 40px;
   }

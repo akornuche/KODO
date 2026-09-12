@@ -1348,3 +1348,177 @@ const getUserAnalytics = async (whereClause) => {
 };
 
 module.exports = exports;
+
+/**
+ * Get all products with admin filtering and management
+ * GET /api/admin/products
+ */
+exports.getAllProducts = async (req, res) => {
+  try {
+    const {
+      status = '',
+      sellerId = '',
+      search = '',
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      verified = '',
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build where clause
+    const where = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (sellerId) {
+      where.sellerId = sellerId;
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (verified) {
+      where.verified = verified === 'true';
+    }
+
+    // Validate sort field
+    const validSortFields = ['createdAt', 'updatedAt', 'title', 'price', 'stock'];
+    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const orderDirection = sortOrder === 'asc' ? 'asc' : 'desc';
+
+    // Get products with pagination
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+              businessName: true,
+            },
+          },
+          _count: {
+            select: {
+              orders: true,
+              reviews: true,
+              bids: true,
+            },
+          },
+        },
+        orderBy: { [orderByField]: orderDirection },
+        skip,
+        take: limitNum,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    logger.info('Admin retrieved products', {
+      requestId: req.id,
+      adminId: req.user.id,
+      count: products.length,
+      total,
+      search,
+      filters: { status, sellerId, verified },
+    });
+
+    res.json({
+      products,
+      meta: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        hasMore: skip + products.length < total,
+      },
+      appliedFilters: {
+        status: status || null,
+        sellerId: sellerId || null,
+        search: search || null,
+        verified: verified ? verified === 'true' : null,
+      },
+    });
+  } catch (error) {
+    logger.error('Get all products error:', { requestId: req.id, error: error.message });
+    res.status(500).json({
+      error: true,
+      message: 'Failed to retrieve products',
+      code: 'GET_PRODUCTS_ERROR',
+      requestId: req.id,
+    });
+  }
+};
+
+/**
+ * Delete a product (admin only)
+ * DELETE /api/admin/products/:id
+ */
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason = '' } = req.body;
+
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { seller: { select: { email: true, username: true } } },
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        error: true,
+        message: 'Product not found',
+        code: 'PRODUCT_NOT_FOUND',
+      });
+    }
+
+    // Delete the product
+    await prisma.product.delete({ where: { id } });
+
+    // Notify seller
+    if (product.seller?.email) {
+      await sendEmail({
+        to: product.seller.email,
+        subject: 'Product Removed - KODO Admin Action',
+        html: `
+          <h2>Product Removal Notice</h2>
+          <p>Your product "<strong>${product.title}</strong>" has been removed from KODO by our admin team.</p>
+          ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+          <p>If you believe this is a mistake, please contact our support team.</p>
+        `,
+      }).catch(err => logger.error('Failed to send product deletion email:', err));
+    }
+
+    logger.info('Admin deleted product', {
+      requestId: req.id,
+      adminId: req.user.id,
+      productId: id,
+      sellerId: product.sellerId,
+      reason,
+    });
+
+    res.json({
+      message: 'Product deleted successfully',
+      productId: id,
+    });
+  } catch (error) {
+    logger.error('Delete product error:', { requestId: req.id, error: error.message });
+    res.status(500).json({
+      error: true,
+      message: 'Failed to delete product',
+      code: 'DELETE_PRODUCT_ERROR',
+      requestId: req.id,
+    });
+  }
+};

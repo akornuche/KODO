@@ -74,4 +74,10 @@ router.put(
   adminController.resolveDispute
 );
 
+// Get all products
+router.get('/products', adminController.getAllProducts);
+
+// Delete a product
+router.delete('/products/:id', adminController.deleteProduct);
+
 module.exports = router;

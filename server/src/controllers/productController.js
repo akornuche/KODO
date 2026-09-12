@@ -61,7 +61,10 @@ exports.getAllProducts = async (req, res) => {
     }
 
     if (category) {
-      where.category = { equals: category, mode: 'insensitive' };
+      // SQLite does not support Prisma's `mode: 'insensitive'` string filter.
+      // Category values are controlled by the frontend category list, so exact
+      // equality is safe and preserves the stored category value.
+      where.category = { equals: category };
     }
 
     if (condition) {
@@ -688,7 +691,7 @@ exports.searchProducts = async (req, res) => {
     const additionalFilters = [];
 
     if (category) {
-      additionalFilters.push({ category: { equals: category, mode: 'insensitive' } });
+      additionalFilters.push({ category: { equals: category } });
     }
 
     if (condition) {

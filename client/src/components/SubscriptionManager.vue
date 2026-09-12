@@ -229,7 +229,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { enhancedFeaturesService } from '@/services/enhancedFeaturesService';
+import { subscriptionService } from '@/services/enhancedFeaturesService';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
 

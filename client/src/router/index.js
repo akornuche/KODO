@@ -155,6 +155,24 @@ const router = createRouter({
       component: () => import('../views/admin/AdminView.vue'),
       meta: { requiresAuth: true, requiresRole: 'admin' },
     },
+    {
+      path: '/admin/products',
+      name: 'admin-products',
+      component: () => import('../views/admin/AdminProductsView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
+    {
+      path: '/admin/disputes',
+      name: 'admin-disputes',
+      component: () => import('../views/admin/AdminDisputesView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
+    {
+      path: '/admin/analytics',
+      name: 'admin-analytics',
+      component: () => import('../views/admin/AdminAnalyticsView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'admin' },
+    },
     // New Enhanced Features Routes
     {
       path: '/features',

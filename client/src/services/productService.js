@@ -5,7 +5,18 @@ export const productService = {
   // Get all products with filters
   async getProducts(params = {}) {
     const response = await api.get('/api/products', { params });
-    return response.data;
+    const data = response.data || {};
+
+    return {
+      ...data,
+      products: Array.isArray(data.products) ? data.products : (data.items || []),
+      pagination: data.pagination || (data.meta ? {
+        page: data.meta.page,
+        limit: data.meta.limit,
+        total: data.meta.total,
+        pages: data.meta.totalPages,
+      } : undefined),
+    };
   },
 
   // Search products

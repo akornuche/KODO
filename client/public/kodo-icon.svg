@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>KODO</title>
+  <rect width="512" height="512" rx="96" fill="#10b981"/>
+  <circle cx="256" cy="218" r="112" fill="#ffffff" opacity="0.2"/>
+  <circle cx="256" cy="218" r="84" fill="#ffffff"/>
+  <path d="M218 150h38v54l50-54h48l-62 68 68 68h-50l-54-55v55h-38z" fill="#10b981"/>
+  <text x="256" y="408" text-anchor="middle" font-family="Arial, sans-serif" font-size="76" font-weight="700" fill="#ffffff">KODO</text>
+</svg>

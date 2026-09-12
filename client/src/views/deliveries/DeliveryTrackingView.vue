@@ -317,8 +317,9 @@ import { useAuthStore } from '@/stores/auth';
 import { deliveryService } from '@/services/dashboardService';
 import { getSocket, onEvent, offEvent } from '@/services/socket';
 import { formatCurrency, formatDate, formatRelativeTime } from '@/utils/helpers';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+
+// Lazy-load mapboxgl to reduce initial bundle size
+let mapboxgl = null;
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -539,8 +540,19 @@ const cleanupRealtimeUpdates = () => {
 };
 
 // Map initialization
-const initializeMap = () => {
+const initializeMap = async () => {
   if (!mapContainer.value) return;
+
+  // Lazy-load mapboxgl only when map is needed
+  if (!mapboxgl) {
+    const mapboxglModule = await import('mapbox-gl');
+    mapboxgl = mapboxglModule.default;
+    // Load mapbox CSS dynamically
+    const link = document.createElement('link');
+    link.href = 'https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
 
   // Use a default Mapbox access token (in production, this should be from environment variables)
   mapboxgl.accessToken = 'pk.eyJ1IjoiYWtvcm51Y2hlIiwiYSI6ImNtM3p5ZG5zZjAxbG0yanF1dWF5dWF5ZG4ifQ.example_token_replace_with_real';
@@ -619,7 +631,7 @@ const updateCourierMarker = (location) => {
 
 onMounted(async () => {
   await fetchDelivery();
-  initializeMap();
+  await initializeMap();
   setupRealtimeUpdates();
 });
 

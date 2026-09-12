@@ -1,4 +1,4 @@
-import api from './api';
+import api from './apiClient';
 
 /**
  * Product Recommendation Service
@@ -11,7 +11,7 @@ import api from './api';
  * @returns {Promise<Object>} Recommended products
  */
 export const getRecommendations = async (limit = 10) => {
-  const response = await api.get('/recommendations', {
+  const response = await api.get('/api/recommendations', {
     params: { limit },
   });
   return response.data;
@@ -24,7 +24,7 @@ export const getRecommendations = async (limit = 10) => {
  * @returns {Promise<Object>} Similar products
  */
 export const getSimilarProducts = async (productId, limit = 6) => {
-  const response = await api.get(`/recommendations/similar/${productId}`, {
+  const response = await api.get(`/api/recommendations/similar/${productId}`, {
     params: { limit },
   });
   return response.data;
@@ -37,7 +37,7 @@ export const getSimilarProducts = async (productId, limit = 6) => {
  * @returns {Promise<Object>} Frequently bought together products
  */
 export const getFrequentlyBoughtTogether = async (productId, limit = 4) => {
-  const response = await api.get(`/recommendations/frequently-bought/${productId}`, {
+  const response = await api.get(`/api/recommendations/frequently-bought/${productId}`, {
     params: { limit },
   });
   return response.data;
@@ -49,7 +49,7 @@ export const getFrequentlyBoughtTogether = async (productId, limit = 4) => {
  * @returns {Promise<Object>} Recommended products based on history
  */
 export const getRecommendationsBasedOnHistory = async (limit = 10) => {
-  const response = await api.get('/recommendations/based-on-history', {
+  const response = await api.get('/api/recommendations/based-on-history', {
     params: { limit },
   });
   return response.data;
@@ -61,7 +61,7 @@ export const getRecommendationsBasedOnHistory = async (limit = 10) => {
  * @returns {Promise<Object>} Success message
  */
 export const trackProductView = async (productId) => {
-  const response = await api.post('/recommendations/track-view', {
+  const response = await api.post('/api/recommendations/track-view', {
     productId,
   });
   return response.data;

@@ -144,13 +144,11 @@ exports.searchFAQ = async (req, res) => {
           {
             title: {
               contains: q,
-              mode: 'insensitive',
             },
           },
           {
             content: {
               contains: q,
-              mode: 'insensitive',
             },
           },
         ],

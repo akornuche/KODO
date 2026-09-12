@@ -1,6 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Buyer Dashboard</h1>
+  <DashboardLayout title="Buyer Dashboard" :sidebar-menu="sidebarMenu">
 
     <!-- Stats Cards -->
     <div v-if="loading.stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -210,13 +209,16 @@
         </table>
       </div>
     </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
 import { onMounted, computed } from 'vue';
 import { useDashboardStore } from '@/stores/dashboard';
-import { formatCurrency, formatDate, formatRelativeTime } from '@/utils/helpers';
+import { useAuthStore } from '@/stores/auth';
+import { formatCurrency, formatRelativeTime, formatBidStatus } from '@/utils/helpers';
+import DashboardLayout from '@/components/DashboardLayout.vue';
+import { ChartBarIcon, MagnifyingGlassIcon, CubeIcon, HeartIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
 
 const dashboardStore = useDashboardStore();
 
@@ -225,16 +227,6 @@ const myBids = computed(() => dashboardStore.myBids);
 const myOrders = computed(() => dashboardStore.myOrders);
 const loading = computed(() => dashboardStore.loading);
 const error = computed(() => dashboardStore.error);
-
-const formatBidStatus = (status) => {
-  const statusMap = {
-    pending: 'Pending',
-    offer_received: 'Offer Received',
-    accepted: 'Accepted',
-    rejected: 'Rejected',
-  };
-  return statusMap[status] || status;
-};
 
 const handleAcceptOffer = async (bidId) => {
   if (!confirm('Accept this offer? This will create an order.')) return;
@@ -258,6 +250,14 @@ const handleRejectOffer = async (bidId) => {
     alert(error.response?.data?.message || 'Failed to reject offer');
   }
 };
+
+const sidebarMenu = [
+  { path: '/dashboard', label: 'Overview', icon: ChartBarIcon },
+  { path: '/requests', label: 'My Requests', icon: MagnifyingGlassIcon },
+  { path: '/orders', label: 'My Orders', icon: CubeIcon },
+  { path: '/wishlist', label: 'Wishlist', icon: HeartIcon },
+  { path: '/chat', label: 'Messages', icon: ChatBubbleLeftIcon },
+];
 
 onMounted(async () => {
   try {

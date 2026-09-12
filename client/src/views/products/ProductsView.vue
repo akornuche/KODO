@@ -219,18 +219,23 @@ const productCount = computed(() => productStore.pagination.total || 0);
 useCategorySEO(category, productCount);
 
 // Breadcrumb Navigation
-watch(category, (newCategory) => {
-  const breadcrumbs = [
+const breadcrumbs = computed(() => {
+  const items = [
     { name: 'Home', url: '/' },
-    { name: 'Products', url: '/products' }
+    { name: 'Products', url: '/products' },
   ];
-  
-  if (newCategory) {
-    breadcrumbs.push({ name: newCategory, url: `/products?category=${encodeURIComponent(newCategory)}` });
+
+  if (category.value) {
+    items.push({
+      name: category.value,
+      url: `/products?category=${encodeURIComponent(category.value)}`,
+    });
   }
-  
-  useBreadcrumbs(breadcrumbs);
-}, { immediate: true });
+
+  return items;
+});
+
+useBreadcrumbs(breadcrumbs);
 const categories = [
   'Electronics',
   'Clothing',

@@ -70,8 +70,8 @@ export const useProductStore = defineStore('product', {
 
         const data = await productService.getProducts(params);
 
-        this.products = data.products;
-        this.facets = data.facets;
+        this.products = Array.isArray(data.products) ? data.products : [];
+        this.facets = data.facets || null;
         
         if (data.pagination) {
           this.pagination = { ...this.pagination, ...data.pagination };
@@ -98,7 +98,7 @@ export const useProductStore = defineStore('product', {
         };
 
         const data = await productService.searchProducts(params);
-        this.products = data.products;
+        this.products = Array.isArray(data.products) ? data.products : [];
         
         if (data.pagination) {
           this.pagination = { ...this.pagination, ...data.pagination };

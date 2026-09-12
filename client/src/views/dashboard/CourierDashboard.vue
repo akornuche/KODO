@@ -1,6 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Courier Dashboard</h1>
+  <DashboardLayout title="Courier Dashboard" :sidebar-menu="sidebarMenu">
 
     <!-- Stats Cards -->
     <div v-if="loading.stats" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -214,15 +213,25 @@
         </div>
       </div>
     </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
 import { onMounted, computed } from 'vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import { formatCurrency, formatRelativeTime } from '@/utils/helpers';
+import DashboardLayout from '@/components/DashboardLayout.vue';
+import { ChartBarIcon, ClipboardIcon, TruckIcon, ClockIcon, ChatBubbleLeftIcon } from '@heroicons/vue/24/outline';
 
 const dashboardStore = useDashboardStore();
+
+const sidebarMenu = [
+  { path: '/dashboard', label: 'Overview', icon: ChartBarIcon },
+  { path: '/deliveries', label: 'Available', icon: ClipboardIcon },
+  { path: '/deliveries/active', label: 'Active Deliveries', icon: TruckIcon },
+  { path: '/deliveries/history', label: 'History', icon: ClockIcon },
+  { path: '/chat', label: 'Messages', icon: ChatBubbleLeftIcon },
+];
 
 const courierStats = computed(() => dashboardStore.courierStats);
 const availableDeliveries = computed(() => dashboardStore.availableDeliveries);

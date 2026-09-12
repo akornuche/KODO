@@ -132,7 +132,6 @@ describe('Product Controller', () => {
       const whereClause = prisma.product.findMany.mock.calls[0][0].where;
       expect(whereClause.category).toEqual({
         equals: 'Electronics',
-        mode: 'insensitive',
       });
     });
 
