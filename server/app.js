@@ -92,9 +92,6 @@ const app = express();
 // Initialize Sentry for error monitoring
 errorMonitoring.initializeSentry();
 
-// Import production security middleware
-const securityProduction = require('./src/middleware/securityProduction');
-
 // Trust proxy (needed for rate limiting behind reverse proxies)
 app.set('trust proxy', 1);
 
