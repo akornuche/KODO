@@ -554,8 +554,9 @@ const initializeMap = async () => {
     document.head.appendChild(link);
   }
 
-  // Use a default Mapbox access token (in production, this should be from environment variables)
-  mapboxgl.accessToken = 'pk.eyJ1IjoiYWtvcm51Y2hlIiwiYSI6ImNtM3p5ZG5zZjAxbG0yanF1dWF5dWF5ZG4ifQ.example_token_replace_with_real';
+  // Use Mapbox access token from environment variables
+  // NEVER hardcode credentials in source code
+  mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
   map.value = new mapboxgl.Map({
     container: mapContainer.value,
