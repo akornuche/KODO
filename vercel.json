@@ -1,6 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build:vercel",
+  "nodeVersion": "20.x",
   "framework": null,
   "cleanUrls": true,
   "functions": {
