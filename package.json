@@ -1,0 +1,41 @@
+{
+  "name": "kodo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KODO - E-commerce platform with delivery and payments",
+  "engines": {
+    "node": "18.x"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "build": "npm run build:client && npm run build:server",
+    "build:vercel": "npm run build:client",
+    "build:client": "cd client && npm install && npm run build",
+    "build:server": "cd server && npm install",
+    "start": "cd server && npm start",
+    "start:vercel": "cd server && npm start",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "cd client && npm test",
+    "test:server": "cd server && npm test",
+    "test:integration": "cd server && npm run test:integration",
+    "test:integration:flows": "cd server && npm run test:integration -- critical-flows.integration.test.js",
+    "test:integration:roles": "cd server && npm run test:integration -- roles.integration.test.js",
+    "db:migrate:prod": "cd server && npm run db:migrate:prod",
+    "db:verify": "cd server && npm run db:verify",
+    "db:backup": "cd server && npm run db:backup",
+    "lint": "npm run lint:client && npm run lint:server",
+    "lint:client": "cd client && npm run lint || true",
+    "lint:server": "cd server && npm run lint || true",
+    "perf:check": "cd server && npm run perf:check"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0"
+  }
+}
