@@ -32,6 +32,18 @@
     "lint:server": "cd server && npm run lint || true",
     "perf:check": "cd server && npm run perf:check"
   },
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "prisma": true,
+    "bcrypt": true,
+    "sharp": true,
+    "esbuild": true,
+    "@firebase/util": true,
+    "protobufjs": true,
+    "@parcel/watcher": true,
+    "unrs-resolver": true
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },

@@ -42,3 +42,4 @@ temp/
 
 # Uploaded files
 server/uploads/
+.vercel
