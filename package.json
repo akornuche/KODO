@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
     "build": "npm run build:client && npm run build:server",
-    "build:vercel": "npm install --prefix client && npm run build --prefix client && npx prisma generate --schema=server/prisma/schema.prisma",
+    "build:vercel": "npm install --prefix client --include=dev && npm run build --prefix client && npx prisma generate --schema=server/prisma/schema.prisma",
     "build:client": "npm install --prefix client && npm run build --prefix client",
     "build:server": "cd server && npm install",
     "start": "cd server && npm start",
